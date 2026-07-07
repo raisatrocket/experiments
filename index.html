@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lawn Club — A Grass Court Tennis Game</title>
+<meta name="description" content="An elegant lawn-tennis game played from the baseline. Swing with your mouse, shape the ball with topspin and slice, and take a best-of-three duel against the club professional.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23cbe54e'/%3E%3Cpath d='M4 8 Q16 16 4 24 M28 8 Q16 16 28 24' stroke='%23fff' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/great-vibes-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body id="top">
+
+<div class="scenery" aria-hidden="true">
+  <div class="lawn"></div>
+  <div class="sunlight"></div>
+  <div class="cloud cloud-1"></div>
+  <div class="cloud cloud-2"></div>
+  <div class="cloud cloud-3"></div>
+  <div class="vignette"></div>
+</div>
+
+<header class="nav">
+  <div class="nav-blur" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="nav-tint" aria-hidden="true"></div>
+  <div class="nav-inner">
+    <a class="wordmark script" href="#top">The Lawn Club</a>
+    <nav class="nav-links" aria-label="Site">
+      <a href="#court">Centre Court</a>
+      <a href="#strokes">The Strokes</a>
+      <button id="soundToggle" class="sound-toggle" type="button" aria-pressed="true" title="Toggle sound">
+        <svg class="icon-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+        <svg class="icon-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"/><path d="m16 9 5 6M21 9l-5 6"/></svg>
+        <span class="visually-hidden">Toggle sound</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="eyebrow">A midsummer lawn &middot; est. MMXXVI</p>
+    <h1 class="script hero-title">On Hallowed Grass</h1>
+    <p class="hero-sub">An afternoon at the baseline &mdash; sunshine, birdsong, a politely hushed crowd, and a best&#8209;of&#8209;three duel against the club professional. Deuce, advantage; the full liturgy.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#court">Step onto Court</a>
+      <a class="btn btn-ghost" href="#strokes">Learn the strokes</a>
+    </div>
+    <div class="scroll-cue" aria-hidden="true"></div>
+  </section>
+
+  <section id="court" class="court-section">
+    <p class="eyebrow">Best of three games &middot; quiet, please</p>
+    <h2 class="script section-title">Centre Court</h2>
+
+    <div class="stage">
+      <div class="scoreboard" aria-live="polite">
+        <div class="sb-head">
+          <span class="sb-club">The Lawn Club &middot; Centre Court</span>
+          <span class="sb-cols"><span>games</span><span>points</span></span>
+        </div>
+        <div class="sb-row" id="rowYou">
+          <span class="sb-name"><i class="serve-dot" id="dotYou"></i>You</span>
+          <span class="sb-cols"><span id="gamesYou">0</span><span id="ptsYou">&ndash;</span></span>
+        </div>
+        <div class="sb-row" id="rowPro">
+          <span class="sb-name"><i class="serve-dot" id="dotPro"></i>The Club Pro</span>
+          <span class="sb-cols"><span id="gamesPro">0</span><span id="ptsPro">&ndash;</span></span>
+        </div>
+      </div>
+
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="game" aria-label="Tennis court. Move the mouse to swing your racket."></canvas>
+        <div class="toast" id="toast" aria-hidden="true"></div>
+        <div class="call script" id="call" aria-hidden="true"></div>
+        <div class="hint" id="hint" aria-hidden="true"></div>
+        <div class="overlay" id="overlay">
+          <p class="eyebrow" id="ovEyebrow">Gentlemen &amp; ladies, take your places</p>
+          <h3 class="script ov-title" id="ovTitle">Anyone for tennis?</h3>
+          <p class="ov-copy" id="ovCopy">Your racket shadows the mouse &mdash; sweep through the ball to strike. Swing speed is pace; brush up for topspin, carve down for slice, or barely move for a drop shot. First to two games takes the match.</p>
+          <button class="btn btn-primary" id="playBtn" type="button">Play the Match</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="strokes" class="strokes-section">
+    <p class="eyebrow">A short apprenticeship</p>
+    <h2 class="script section-title">The Strokes</h2>
+    <div class="cards">
+      <article class="card">
+        <span class="card-num script">I.</span>
+        <h3>The Swing</h3>
+        <p>Your racket shadows the mouse. Sweep <em>through</em> the ball &mdash; the faster the swing, the heavier the pace. Sweep left or right to place it into the corners.</p>
+      </article>
+      <article class="card">
+        <span class="card-num script">II.</span>
+        <h3>Topspin</h3>
+        <p>Brush upward through contact. The ball arcs generously over the net, dips sharply, and kicks off the turf. Hit it as hard as you dare.</p>
+      </article>
+      <article class="card">
+        <span class="card-num script">III.</span>
+        <h3>The Slice</h3>
+        <p>Carve downward through the ball. It floats, holds its line, and skids through low off the grass &mdash; maddening for anyone standing on the other side.</p>
+      </article>
+      <article class="card">
+        <span class="card-num script">IV.</span>
+        <h3>The Drop Shot</h3>
+        <p>The gentlest touch &mdash; barely move at all as you meet the ball &mdash; and it dies just beyond the net while the professional is still ambling forward.</p>
+      </article>
+      <article class="card">
+        <span class="card-num script">V.</span>
+        <h3>The Serve</h3>
+        <p>Click to toss, then strike at the very top of the toss for a flat thunderbolt &mdash; or brush up for a kicking spin serve. Two serves per point, as tradition demands.</p>
+      </article>
+      <article class="card">
+        <span class="card-num script">VI.</span>
+        <h3>Etiquette</h3>
+        <p>The crowd hushes for your serve and applauds a rally well fought. The birds, it must be said, carry on regardless. Sound may be silenced from the club nav.</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p class="script footer-flourish">Anyone for tennis?</p>
+  <p class="footer-fine">The Lawn Club &middot; strawberries &amp; cream sold separately &middot; all sound conjured live in your browser</p>
+</footer>
+
+<script type="module" src="game.js"></script>
+</body>
+</html>
