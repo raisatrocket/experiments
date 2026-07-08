@@ -3,11 +3,11 @@
    ============================================================ */
 
 @font-face {
-  font-family: "Great Vibes";
+  font-family: "Pinyon Script";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("fonts/great-vibes-latin.woff2") format("woff2");
+  src: url("fonts/pinyon-script-latin.woff2") format("woff2");
 }
 
 @font-face {
@@ -29,7 +29,7 @@
   --ink: #14281c;
   --shadow-soft: 0 24px 70px rgba(10, 30, 18, 0.35);
   --font-sans: "Inter", "Helvetica Neue", -apple-system, "Segoe UI", sans-serif;
-  --font-script: "Great Vibes", "Snell Roundhand", "Apple Chancery", cursive;
+  --font-script: "Pinyon Script", "Snell Roundhand", "Apple Chancery", cursive;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -69,6 +69,17 @@ body {
     ),
     linear-gradient(180deg, #83b968 0%, #63a054 38%, #4d8a46 70%, #3c7440 100%);
 }
+
+/* WebGL lawn — sits over the CSS gradient fallback. Hidden until the
+   shader initialises; when it runs, the .scenery gets a .gl-on class
+   that removes the now-redundant CSS cloud divs. */
+#lawnGL {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: none;
+}
+.scenery.gl-on #lawnGL { display: block; }
+.scenery.gl-on .cloud { display: none; }
 
 .sunlight {
   position: absolute; inset: -20%;
@@ -141,12 +152,12 @@ body {
 }
 
 .wordmark {
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: var(--cream);
   text-decoration: none;
-  text-shadow: 0 1px 12px rgba(8, 24, 14, 0.5);
+  text-shadow: 0 1px 3px rgba(8, 24, 14, 0.55), 0 2px 14px rgba(8, 24, 14, 0.5);
   line-height: 1;
-  padding-top: 6px;
+  padding-top: 2px;
 }
 
 .nav-links { display: flex; align-items: center; gap: 26px; }
@@ -190,10 +201,10 @@ body {
 }
 
 .section-title {
-  font-size: clamp(3rem, 7vw, 4.6rem);
-  line-height: 1.15;
-  margin: 0.15em 0 0.45em;
-  text-shadow: 0 2px 24px rgba(8, 24, 14, 0.35);
+  font-size: clamp(3.6rem, 8.4vw, 5.6rem);
+  line-height: 1.1;
+  margin: 0.1em 0 0.4em;
+  text-shadow: 0 1px 3px rgba(8, 24, 14, 0.4), 0 3px 26px rgba(8, 24, 14, 0.35);
 }
 
 /* ------------------------------------------------------------
@@ -210,10 +221,10 @@ body {
 }
 
 .hero-title {
-  font-size: clamp(4rem, 11vw, 8.2rem);
-  line-height: 1.12;
-  margin: 0.12em 0 0.1em;
-  text-shadow: 0 3px 34px rgba(8, 24, 14, 0.4);
+  font-size: clamp(4.8rem, 13vw, 9.8rem);
+  line-height: 1.08;
+  margin: 0.08em 0 0.1em;
+  text-shadow: 0 2px 4px rgba(8, 24, 14, 0.45), 0 4px 36px rgba(8, 24, 14, 0.4);
 }
 
 .hero-sub {
@@ -357,9 +368,9 @@ body {
 .call {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: clamp(2.4rem, 6.5vw, 4.4rem);
+  font-size: clamp(2.9rem, 7.8vw, 5.3rem);
   color: var(--cream);
-  text-shadow: 0 3px 30px rgba(8, 24, 14, 0.65);
+  text-shadow: 0 2px 5px rgba(8, 24, 14, 0.7), 0 4px 32px rgba(8, 24, 14, 0.65);
   opacity: 0;
   pointer-events: none;
   padding: 0 24px; text-align: center;
@@ -403,7 +414,7 @@ body {
 }
 .overlay.hidden { opacity: 0; pointer-events: none; }
 
-.ov-title { font-size: clamp(2.6rem, 6vw, 4rem); line-height: 1.1; }
+.ov-title { font-size: clamp(3.1rem, 7vw, 4.8rem); line-height: 1.06; text-shadow: 0 2px 4px rgba(8, 24, 14, 0.5); }
 .ov-copy { max-width: 480px; font-size: 0.95rem; color: var(--cream-soft); margin-bottom: 8px; }
 
 /* ------------------------------------------------------------
@@ -465,9 +476,9 @@ body {
 }
 
 .footer-flourish {
-  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  font-size: clamp(2.9rem, 6vw, 4.2rem);
   margin-bottom: 12px;
-  text-shadow: 0 2px 20px rgba(8, 24, 14, 0.4);
+  text-shadow: 0 2px 4px rgba(8, 24, 14, 0.45), 0 3px 22px rgba(8, 24, 14, 0.4);
 }
 
 .footer-fine {

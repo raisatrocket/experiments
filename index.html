@@ -6,7 +6,7 @@
 <title>The Lawn Club — A Grass Court Tennis Game</title>
 <meta name="description" content="An elegant lawn-tennis game played from the baseline. Swing with your mouse, shape the ball with topspin and slice, and take a best-of-three duel against the club professional.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23cbe54e'/%3E%3Cpath d='M4 8 Q16 16 4 24 M28 8 Q16 16 28 24' stroke='%23fff' stroke-width='2' fill='none'/%3E%3C/svg%3E">
-<link rel="preload" href="fonts/great-vibes-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/pinyon-script-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,6 +14,7 @@
 
 <div class="scenery" aria-hidden="true">
   <div class="lawn"></div>
+  <canvas id="lawnGL"></canvas>
   <div class="sunlight"></div>
   <div class="cloud cloud-1"></div>
   <div class="cloud cloud-2"></div>
@@ -112,7 +113,7 @@
       <article class="card">
         <span class="card-num script">V.</span>
         <h3>The Serve</h3>
-        <p>Click to toss, then strike at the very top of the toss for a flat thunderbolt &mdash; or brush up for a kicking spin serve. Two serves per point, as tradition demands.</p>
+        <p>Click to toss, then sweep up through the ball &mdash; it always finds the box. Swing speed is pace; strike at the top of the toss for a flat thunderbolt, or meet it softer and lower for a kicking spin serve.</p>
       </article>
       <article class="card">
         <span class="card-num script">VI.</span>
@@ -128,6 +129,7 @@
   <p class="footer-fine">The Lawn Club &middot; strawberries &amp; cream sold separately &middot; all sound conjured live in your browser</p>
 </footer>
 
+<script src="lawn.js"></script>
 <script type="module" src="game.js"></script>
 </body>
 </html>

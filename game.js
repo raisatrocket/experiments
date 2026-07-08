@@ -311,7 +311,7 @@ function setupServe() {
   if (G.server === 'you') {
     G.phase = 'serve-ready';
     G.serveX = sx;
-    hint(G.faults === 1 ? 'Second serve — click to toss' : 'Click to toss · strike at the top');
+    hint(G.faults === 1 ? 'Second serve — click to toss' : 'Click to toss · sweep up through the ball');
     audio.hush();
   } else {
     G.phase = 'pro-serve';
@@ -378,40 +378,68 @@ function playerStrike(isServe) {
   const quality = 1 - clamp(offset / hitRadius(), 0, 1) * 0.85;
 
   const x0 = ball.x, y0 = ball.y, z0 = ball.z;
-  let vy, margin;
+  let vx, vy, vz, serveStyle = null;
+
   if (isServe) {
-    vy = 13 + 19 * power;
-    margin = 0.1 + 0.3 * quality + 0.3 * Math.max(0, spin) + (1 - quality) * rand(-0.35, 0.35);
+    // Fully forgiving serve: solve the flight to land inside the service
+    // box, so it essentially always goes in. Swing speed and contact height
+    // shape its character rather than deciding fault vs. good.
+    const box = serveBox();
+    const cxBox = (box.x0 + box.x1) / 2;
+    const halfBox = (box.x1 - box.x0) / 2;
+    const marginIn = 0.5; // keep this far inside the lines
+
+    // Contact near the toss apex (small |vz|) → flatter, faster bomb.
+    // A low/late strike gets capped pace and automatic kicking topspin.
+    const apex = clamp(1 - Math.abs(ball.vz) / 3.5, 0, 1);
+    const paceCap = 15 + 8 * apex;
+    const serveSpin = Math.max(spin, (1 - apex) * 0.5); // never slices a serve
+    serveStyle = apex > 0.55 ? 'Flat serve' : 'Kick serve';
+
+    // Land shallow→deep with power, always comfortably inside the box.
+    let target = (CT.netY + 1.7) + (CT.svcFar - CT.netY - 3.4) * (power * 0.7);
+    target = clamp(target, CT.netY + 1.3, CT.svcFar - 1.3);
+
+    // Solve vy/vz using an *effective* gravity that includes the topspin
+    // Magnus dip, so the ball both clears the net and lands where we aim —
+    // this is what makes the serve reliably go in.
+    const margin = 0.45; // clearance over the net
+    let tLand = 1;
+    vy = 8 + 16 * power;
+    for (let i = 0; i < 8; i++) {
+      const vh = Math.max(6, vy);
+      const a = GRAV + MAGNUS * serveSpin * vh;
+      const tNet = (CT.netY - y0) / Math.max(2, vy);
+      vz = (CT.netH + margin - z0 + 0.5 * a * tNet * tNet) / tNet;
+      tLand = (vz + Math.sqrt(vz * vz + 2 * a * z0)) / a;
+      const landY = y0 + vy * tLand;
+      if (Math.abs(landY - target) < 0.2) break;
+      vy = clamp(vy * target / Math.max(2, landY), 8, paceCap);
+    }
+    const targetX = clamp(cxBox + lat * (halfBox - marginIn), box.x0 + marginIn, box.x1 - marginIn);
+    vx = (targetX - x0) / Math.max(0.25, tLand);
+
+    Object.assign(ball, { vx, vy, vz, spin: serveSpin, flight: true, lastHit: 'you', bounces: 0, isServe: true, netTouched: false });
   } else {
     vy = 8.5 + 17.5 * power;
-    margin = 0.16 + 0.5 * quality + 0.32 * Math.max(0, spin) + 0.55 * Math.max(0, -spin)
+    const margin = 0.16 + 0.5 * quality + 0.32 * Math.max(0, spin) + 0.55 * Math.max(0, -spin)
       + (1 - quality) * rand(-0.45, 0.45);
+    vz = solveVz(y0, z0, vy, margin);
+    const tLand = flightTime(z0, vz);
+    const targetX = clamp(lat * 3.6, -3.55, 3.55) + (1 - quality) * rand(-1.6, 1.6);
+    vx = (targetX - x0) / Math.max(0.25, tLand);
+    Object.assign(ball, { vx, vy, vz, spin, flight: true, lastHit: 'you', bounces: 0, isServe: false, netTouched: false });
   }
-  const vz = solveVz(y0, z0, vy, margin);
-  const tLand = flightTime(z0, vz);
 
-  let targetX;
-  if (isServe) {
-    const box = serveBox();
-    const cx = (box.x0 + box.x1) / 2;
-    targetX = clamp(cx + lat * 2.4 + (1 - quality) * rand(-1.4, 1.4), -CT.halfS - 1, CT.halfS + 1);
-  } else {
-    targetX = clamp(lat * 3.6, -3.55, 3.55) + (1 - quality) * rand(-1.6, 1.6);
-  }
-  const vx = (targetX - x0) / Math.max(0.25, tLand);
-
-  Object.assign(ball, {
-    vx, vy, vz, spin,
-    flight: true, lastHit: 'you', bounces: 0,
-    isServe, netTouched: false,
-  });
   G.phase = 'rally';
   G.rallyHits++;
   hitCooldown = 0.35;
   ai.plan = null;
-  audio.hit(power, spin);
+  audio.hit(power, ball.spin);
 
-  if (!isServe) {
+  if (isServe) {
+    if (serveStyle) toast(serveStyle);
+  } else {
     if (power < 0.24 && spin < 0.15) toast('Drop shot');
     else if (spin > 0.5) toast('Topspin');
     else if (spin < -0.42) toast('Slice');
@@ -891,6 +919,39 @@ function drawScene(now) {
   if (!ballBehindNet && ball.active) drawBall(now);
 
   drawRacket(now);
+  drawPaceMeter();
+}
+
+/* Live swing-pace gauge, bottom-left. Makes the momentum system legible:
+   the faster you sweep the racket, the fuller the arc — and the more pace
+   on the shot. Uses the same speed→power mapping as playerStrike. */
+function drawPaceMeter() {
+  if (G.phase === 'idle' || G.phase === 'match-over') return;
+  const power = clamp((pointer.speed / W) / 2.6, 0, 1);
+  const cx = 40, cy = H - 34, r = 20;
+  const a0 = Math.PI * 0.8, a1 = Math.PI * 2.2; // 252° sweep
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  // track
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, a0, a1);
+  ctx.strokeStyle = 'rgba(247,243,232,0.22)';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  // charge
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, a0, a0 + (a1 - a0) * power);
+  ctx.strokeStyle = power > 0.82 ? '#ffe98a' : '#c9a227';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  // label
+  ctx.fillStyle = 'rgba(247,243,232,0.75)';
+  ctx.font = `600 ${Math.max(7, W * 0.011)}px Inter, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('PACE', cx, cy + 1);
+  ctx.restore();
 }
 
 function drawNet() {
@@ -1021,6 +1082,19 @@ function drawBall(now) {
     ctx.fillStyle = `rgba(213,229,88,${0.06 + i * 0.03})`;
     ctx.beginPath();
     ctx.arc(t.x, t.y, t.r * (0.5 + i * 0.07), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // apex cue: on your toss, a gold halo blooms in the sweet window near the
+  // top of the toss — the moment to strike for a flat serve
+  if (G.phase === 'serve-toss' && Math.abs(ball.vz) < 1.8 && ball.z > 1.4) {
+    const bloom = 1 - Math.abs(ball.vz) / 1.8;
+    const halo = ctx.createRadialGradient(p.x, p.y, r, p.x, p.y, r * 3.6);
+    halo.addColorStop(0, `rgba(255,233,138,${0.5 * bloom})`);
+    halo.addColorStop(1, 'rgba(255,233,138,0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r * 3.6, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -1172,4 +1246,57 @@ updateScoreboard();
 requestAnimationFrame(frame);
 
 /* hooks for automated verification */
-window.__lawn = { G, ball, ai, awardPoint, setupServe, startMatch, proj, pointer };
+
+/* Drive a single player serve deterministically and report where it lands,
+   integrating the real flight physics (mirrors stepBall) without side effects. */
+function testServe(power, spin, contactZ, latSwing) {
+  G.phase = 'serve-toss';
+  G.server = 'you';
+  const court = serveCourt();
+  G.serveX = court === 'deuce' ? 0.55 : -0.55;
+  hitCooldown = 0;
+  // toss state at the chosen contact height (contactZ), with a vz that sets
+  // how near the apex we are: 0 = dead apex, larger = struck low/late
+  Object.assign(ball, {
+    x: G.serveX, y: 0.35, z: contactZ,
+    vx: 0, vy: 0, vz: (1 - clamp(contactZ / 2.4, 0, 1)) * 4,
+    spin: 0, active: true, flight: false,
+    lastHit: null, bounces: 0, isServe: false, netTouched: false, trail: [],
+  });
+  // synthesize the swing: playerStrike reads pointer.vx/vy (px/s) ÷ W
+  pointer.vx = (latSwing || 0) * 2.0 * W;
+  pointer.vy = -(spin) * 2.2 * W;
+  const targetSpeed = power * 2.6 * W;
+  const cur = Math.hypot(pointer.vx, pointer.vy) || 1;
+  pointer.vx *= targetSpeed / cur;
+  pointer.vy *= targetSpeed / cur;
+  pointer.speed = targetSpeed;
+  // land the racket right on the ball for a clean strike
+  const bp = proj(ball.x, ball.y, ball.z);
+  pointer.inside = true;
+  pointer.x = pointer.prevX = bp.x;
+  pointer.y = pointer.prevY = bp.y;
+
+  playerStrike(true);
+
+  // integrate the flight to first bounce
+  const b = { x: ball.x, y: ball.y, z: ball.z, vx: ball.vx, vy: ball.vy, vz: ball.vz, spin: ball.spin };
+  const box = serveBox();
+  const h = 1 / 240;
+  let prevY = b.y, netZ = 99;
+  for (let t = 0; t < 4; t += h) {
+    const vh = Math.hypot(b.vx, b.vy);
+    b.vz -= (GRAV + MAGNUS * b.spin * vh) * h;
+    const drag = 1 - 0.004 * vh * h;
+    b.vx *= drag; b.vy *= drag;
+    b.x += b.vx * h; b.y += b.vy * h; b.z += b.vz * h;
+    if ((prevY - CT.netY) * (b.y - CT.netY) < 0) netZ = b.z;
+    prevY = b.y;
+    if (b.z <= CT.ballR && b.vz < 0) {
+      return { x: b.x, y: b.y, cleared: netZ > CT.netH, inBox: inBox(b.x, b.y, box) };
+    }
+  }
+  return { x: b.x, y: b.y, cleared: netZ > CT.netH, inBox: false };
+}
+
+window.__lawn = { G, ball, ai, awardPoint, setupServe, startMatch, proj, pointer, testServe };
